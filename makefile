@@ -1,3 +1,4 @@
+CFLAGS+=-O3
 SRC = main.c pgen.c arr_t.c util.c
 HDR = util.h pgen.h arr_t.h
 OBJ = main.o pgen.o arr_t.o util.o

@@ -37,7 +37,7 @@ void print_report(struct rep_t *in)
 	}
 	printf("\n***\n");
 	puts("Performance et al:");
-	printf("* Time taken: %ld seconds, %ld nanoseconds\n", in->time->tv_sec, in->time->tv_nsec);
+	printf("* Time taken: %d seconds, %lu nanoseconds\n", in->time->tv_sec + in->time->tv_nsec / 1000000000, (unsigned long) in->time->tv_nsec % 1000000000);
 	printf("* Highest prime: %ld\n", in->maxp);
 	printf("* Number of primes: %ld\n", in->ngen);
 	printf("\n***\n");
