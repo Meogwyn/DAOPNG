@@ -26,17 +26,17 @@ struct arr_t *gen_primes(struct arr_t *dest, struct pcfg_t *cfg)
 {
 	reset_arr(&dest);
 	fill_arr_upto(dest, cfg->ubound); //fill starting array with consecutive integers
-	size_t ubound;
+	size_t pbound;
 	struct arr_t *temp; //devnote: optimize w/ predicted alloc?
 	size_t cur = 0; //for cleaning output array
 	struct timespec tempt; 
 
 	if (cfg->sqrt) {
-		ubound = floorl(sqrt(cfg->ubound));
+		pbound = floorl(sqrt(cfg->ubound));
 		report->sqrt = 1;
 	}
 	else {
-		ubound = cfg->ubound;
+		pbound = cfg->ubound;
 		report->sqrt = 0;
 	}
 
@@ -55,18 +55,17 @@ struct arr_t *gen_primes(struct arr_t *dest, struct pcfg_t *cfg)
 	}
 
 	for (unsigned long p = 2;;) {
-		///stage 1: use current prime
-		temp = add_comps(temp, p, ubound); //adds multiples of p into the temp array
+		//stage 1: use current prime
+		temp = add_comps(temp, p, cfg->ubound); //adds multiples of p into the temp array
 		for (int i = 0; i < temp->size - 1; i++) {
 			dest->arr[temp->arr[i + 1] - 2] = 0; //cross out multiple of p (except p) 
 		}
 		//TODO: optimize search space
 		//stage 2: find next prime
-		report->maxp = p; //for post-generation purposes
 		do {
 			report->cnt++;
 			p++;
-			if (p > ubound) {
+			if (p > pbound) {
 				goto end;
 			}
 		} while (!dest->arr[p - 2]); //check for being 'crossed out'
@@ -88,11 +87,13 @@ end:
 
 	report->time->tv_sec -= tempt.tv_sec;
 	report->time->tv_nsec -= tempt.tv_nsec;
-	report->ngen = cur;
 
 	slice_arr(dest, 0, cur - 1);
 	free_arr(temp);
 	shrink_arr(dest);
+
+	report->maxp = dest->arr[dest->size]; //for post-generation purposes
+	report->ngen = dest->size;
 
 	return dest;
 }
