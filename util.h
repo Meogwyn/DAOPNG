@@ -8,6 +8,7 @@ struct rep_t {
 	int maxp; //largest prime
 	int cnt;
 	int sqrt;
+	int algo;
 	struct timespec *time; //time spent generating
 };
 struct pcfg_t {
@@ -17,6 +18,7 @@ struct pcfg_t {
 	int enumer; //enumerate generated primes
 	int report; //print performance report - default 1
 	int print; //print prime array
+	int algo; //algorithm - default 1
 
 	int sqrt; //search only up to sqrt(2) - default 1
 	int prealloc; //predict alloc - default 1 - not yet implemented

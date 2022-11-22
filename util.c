@@ -48,7 +48,8 @@ void print_report(struct rep_t *in)
 	else {
 		printf("* Sqrt optimization was not used this run\n");
 	}
-	printf("* Number loop iterations: %ld\n", in->cnt);
+	printf("* Algorithm used: %d\n", in->algo);
+	printf("* Number of loop iterations: %ld\n", in->cnt);
 	printf("\n***\n");
 }
 void grace_exit(int code)
@@ -74,6 +75,7 @@ struct pcfg_t *init_pcfg(void)
 	out->enumer = 0;
 	out->sqrt = 1;
 	out->prealloc = 0; //TODO: change to 1
+	out->algo = 1;
 
 	return out;
 }
@@ -347,6 +349,7 @@ void handle_args(int argc, char **argv)
 	add_opt(copts, 'e', no_argument, "enumerate", NULL, 'e', "Enumerate primes in array print-out");
 	add_opt(copts, 's', no_argument, "no-sqrt", NULL, 's', "Do not optimize search-space with sqrt(p)");
 	add_opt(copts, 'u', no_argument, "pre-alloc", NULL, 'u', "Pre-allocate array with predicted upper bound");
+	add_opt(copts, 'a', required_argument, "algorithm", NULL, 'a', "Select algorithm: 1 (default) - Dan's old algorithm, 2 - Dad's algorithm");
 
 	if (argc == 1) {
 		printf("%s", helpmsg->str);
@@ -378,6 +381,9 @@ void handle_args(int argc, char **argv)
 				break;
 			case 'u':
 				cfg->prealloc = 1; //TODO: change to 0
+				break;
+			case 'a':
+				cfg->algo = atoi(optarg);
 				break;
 		}
 	}
