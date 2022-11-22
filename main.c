@@ -24,7 +24,7 @@ struct rep_t *report;
 
 int main(int argc, char **argv)
 {
-	struct arr_t *dest = init_arr(0);
+	struct arr_t *dest = init_arr(1000);
 
 	helpmsg = init_dstr(0);
 	cfg = init_pcfg();

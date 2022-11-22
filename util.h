@@ -6,6 +6,8 @@
 struct rep_t {
 	int ngen; //number of generated primes
 	int maxp; //largest prime
+	int cnt;
+	int sqrt;
 	struct timespec *time; //time spent generating
 };
 struct pcfg_t {
@@ -13,8 +15,11 @@ struct pcfg_t {
 	size_t ubound; //upper bound
 
 	int enumer; //enumerate generated primes
-	int report; //print performance report
+	int report; //print performance report - default 1
 	int print; //print prime array
+
+	int sqrt; //search only up to sqrt(2) - default 1
+	int prealloc; //predict alloc - default 1 - not yet implemented
 };
 //dstr_t - dynamically resizeable string
 struct dstr_t {

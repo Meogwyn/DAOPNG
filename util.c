@@ -14,9 +14,9 @@ extern struct pcfg_t *cfg;
 
 struct rep_t *init_rep(void)
 {
-	struct rep_t *out = malloc(sizeof out);
+	struct rep_t *out = malloc(sizeof(struct rep_t));
 	
-	out->time = malloc(sizeof out->time);
+	out->time = malloc(sizeof(struct timespec));
 
 	if ((!out) || (!out->time)) {
 		puts("malloc failure in init_rep");
@@ -27,6 +27,8 @@ struct rep_t *init_rep(void)
 	out->maxp = 0;
 	out->time->tv_sec = 0;
 	out->time->tv_nsec = 0;
+	out->cnt = 0;
+	out->sqrt = 0;
 
 	return out;
 }
@@ -40,6 +42,13 @@ void print_report(struct rep_t *in)
 	printf("* Time taken: %d seconds, %lu nanoseconds\n", in->time->tv_sec + in->time->tv_nsec / 1000000000, (unsigned long) in->time->tv_nsec % 1000000000);
 	printf("* Highest prime: %ld\n", in->maxp);
 	printf("* Number of primes: %ld\n", in->ngen);
+	if (in->sqrt) {
+		printf("* Sqrt optimization was used this run\n");
+	}
+	else {
+		printf("* Sqrt optimization was not used this run\n");
+	}
+	printf("* Number loop iterations: %ld\n", in->cnt);
 	printf("\n***\n");
 }
 void grace_exit(int code)
@@ -63,6 +72,8 @@ struct pcfg_t *init_pcfg(void)
 	out->print = 0;
 	out->report = 1;
 	out->enumer = 0;
+	out->sqrt = 1;
+	out->prealloc = 0; //TODO: change to 1
 
 	return out;
 }
@@ -94,13 +105,14 @@ struct dstr_t *init_dstr(size_t salloc)
 	}
 	out->alloc = salloc;
 	out->size = 0;
+	return out;
 }
 void dstr_resizer(struct dstr_t *dest, size_t asize)
 {
 	if (!dest->alloc) {
 		dest->alloc++;
 	}
-	while (dest->size + asize > dest->alloc) {
+	while (asize > dest->alloc) {
 		dest->alloc *= 2;
 	}
 	realloc_dstr(dest, dest->alloc);
@@ -176,7 +188,8 @@ void append_dstr(struct dstr_t *dest, char *str)
 		return;
 	}
 	dstr_resizer(dest, dest->size + strlen(str));
-	strcat(dest->str, str);
+	dest->str = strcat(dest->str, str);
+	dest->size += strlen(str);
 }
 void shrink_dstr(struct dstr_t *dest)
 {
@@ -190,7 +203,7 @@ void free_myopt(struct myopt_t *dest)
 }
 struct myopt_t *init_myopt(char *optstr, struct option *longopts)
 {
-	struct myopt_t *out = malloc(sizeof *out);
+	struct myopt_t *out = malloc(sizeof(struct myopt_t));
 	size_t locnt = 0; //longopt count
 
 	if (!out) {
@@ -222,13 +235,13 @@ struct myopt_t *init_myopt(char *optstr, struct option *longopts)
 			locnt++;
 		}
 		out->loall = locnt; //includes 'NULL' terminator
-		out->longopts = malloc(locnt * sizeof *longopts);
-		memcpy(out->longopts, longopts, locnt * sizeof *longopts);
+		out->longopts = malloc(locnt * sizeof (struct option));
+		memcpy(out->longopts, longopts, locnt * sizeof(struct option));
 		out->lolen = locnt;
 	}
 	else {
 		out->loall = 1;
-		out->longopts = malloc(sizeof *out->longopts);
+		out->longopts = malloc(sizeof(struct option));
 		out->lolen = 0;
 	}
 
@@ -302,7 +315,7 @@ void add_opt(struct myopt_t *copts, int sval, int has_arg, char *lname, int *lfl
 	//resize longopts if needed
 	if (copts->loall < copts->lolen + 1) {
 		copts->loall *= 2;
-		copts->longopts = realloc(copts->longopts, copts->loall * sizeof *copts->longopts);
+		copts->longopts = realloc(copts->longopts, copts->loall * sizeof(struct option));
 	}
 
 	temp = copts->longopts + copts->lolen;
@@ -332,6 +345,8 @@ void handle_args(int argc, char **argv)
 	add_opt(copts, 'p', no_argument, "print", NULL, 'p', "Print prime array");
 	add_opt(copts, 'n', no_argument, "no-report", NULL, 'n', "Do not print performance report");
 	add_opt(copts, 'e', no_argument, "enumerate", NULL, 'e', "Enumerate primes in array print-out");
+	add_opt(copts, 's', no_argument, "no-sqrt", NULL, 's', "Do not optimize search-space with sqrt(p)");
+	add_opt(copts, 'u', no_argument, "pre-alloc", NULL, 'u', "Pre-allocate array with predicted upper bound");
 
 	if (argc == 1) {
 		printf("%s", helpmsg->str);
@@ -357,6 +372,13 @@ void handle_args(int argc, char **argv)
 				break;
 			case 'e':
 				cfg->enumer = 1;
+				break;
+			case 's':
+				cfg->sqrt = 0;
+				break;
+			case 'u':
+				cfg->prealloc = 1; //TODO: change to 0
+				break;
 		}
 	}
 

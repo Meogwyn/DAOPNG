@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -24,10 +25,29 @@ struct arr_t *add_comps(struct arr_t *dest, unsigned long p, unsigned long uboun
 struct arr_t *gen_primes(struct arr_t *dest, struct pcfg_t *cfg)
 {
 	reset_arr(&dest);
-	fill_arr_upto(dest, cfg->ubound);
-	struct arr_t *temp = init_arr(0); //optimize w/ predicted alloc?
+	fill_arr_upto(dest, cfg->ubound); //fill starting array with consecutive integers
+	size_t ubound;
+	struct arr_t *temp; //devnote: optimize w/ predicted alloc?
 	size_t cur = 0; //for cleaning output array
 	struct timespec tempt; 
+
+	if (cfg->sqrt) {
+		ubound = floorl(sqrt(cfg->ubound));
+		report->sqrt = 1;
+	}
+	else {
+		ubound = cfg->ubound;
+		report->sqrt = 0;
+	}
+
+	if (cfg->prealloc) {
+		//some stuff
+		puts("Predicted alloc not supported yet!");
+		grace_exit(-1);
+	}
+	else {
+		temp = init_arr(0);
+	}
 
 	if (-1 == clock_gettime(CLOCK_REALTIME, &tempt)) {
 		puts("clock_gettime failed!");
@@ -36,20 +56,21 @@ struct arr_t *gen_primes(struct arr_t *dest, struct pcfg_t *cfg)
 
 	for (unsigned long p = 2;;) {
 		///stage 1: use current prime
-		temp = add_comps(temp, p, cfg->ubound);
+		temp = add_comps(temp, p, ubound); //adds multiples of p into the temp array
 		for (int i = 0; i < temp->size - 1; i++) {
-			dest->arr[temp->arr[i + 1] - 2] = 0; //cross out comps
+			dest->arr[temp->arr[i + 1] - 2] = 0; //cross out multiple of p (except p) 
 		}
 		//TODO: optimize search space
 		//stage 2: find next prime
-		report->maxp = p;
+		report->maxp = p; //for post-generation purposes
 		do {
+			report->cnt++;
 			p++;
-			if (p > cfg->ubound) {
+			if (p > ubound) {
 				goto end;
 			}
-		} while (!dest->arr[p - 2]);
-		reset_arr(&temp);
+		} while (!dest->arr[p - 2]); //check for being 'crossed out'
+		reset_arr(&temp); //prepare the temp array for next set of multiples 
 	}
 end:
 	for (int i = 0; i < dest->size; i++) {
