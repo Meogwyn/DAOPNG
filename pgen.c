@@ -49,9 +49,9 @@ struct arr_t *gen_primes(struct arr_t *dest, struct pcfg_t *cfg)
 		temp = init_arr(0);
 	}
 
-	clock_getres(CLOCK_REALTIME, &tempt);
-	printf("using CLOCK_REALTIME, which has resolution %d sec, %ld nsec", tempt.tv_sec, tempt.tv_nsec);
-	if (-1 == clock_gettime(CLOCK_REALTIME, &tempt)) {
+	clock_getres(CLOCK_MONOTONIC, &tempt);
+	printf("using CLOCK_MONOTONIC, which has resolution %d sec, %ld nsec", tempt.tv_sec, tempt.tv_nsec);
+	if (-1 == clock_gettime(CLOCK_MONOTONIC, &tempt)) {
 		puts("clock_gettime failed!");
 		grace_exit(-1);
 	}
@@ -66,12 +66,14 @@ struct arr_t *gen_primes(struct arr_t *dest, struct pcfg_t *cfg)
 	for (unsigned long p = 3;;) {
 		//stage 1: use current prime
 		temp = add_comps(temp, p, cfg->ubound); //adds multiples of p into the temp array
+		report->nread += temp->size;
 		for (int i = 0; i < temp->size - 1; i++) {
 			dest->arr[temp->arr[i + 1] - 2] = 0; //cross out multiple of p (except p) 
 		}
 		//TODO: optimize search space
 		//stage 2: find next prime
 		do {
+			report->nread++; 
 			report->cnt++;
 			p += 2;
 			if (p > pbound) {
@@ -89,7 +91,7 @@ end:
 	}
 
 	//report stuff
-	if (-1 == clock_gettime(CLOCK_REALTIME, report->time)) {
+	if (-1 == clock_gettime(CLOCK_MONOTONIC, report->time)) {
 		puts("clock_gettime failed!");
 		grace_exit(-1);
 	}
@@ -131,18 +133,18 @@ struct arr_t *gen_primes_2(struct arr_t *dest, struct pcfg_t *cfg)
 		grace_exit(-1);
 	}
 
-	clock_getres(CLOCK_REALTIME, &tempt);
-	printf("using CLOCK_REALTIME, which has resolution %d sec, %ld nsec", tempt.tv_sec, tempt.tv_nsec);
-	if (-1 == clock_gettime(CLOCK_REALTIME, &tempt)) {
+	clock_getres(CLOCK_MONOTONIC, &tempt);
+	printf("using CLOCK_MONOTONIC, which has resolution %d sec, %ld nsec", tempt.tv_sec, tempt.tv_nsec);
+	if (-1 == clock_gettime(CLOCK_MONOTONIC, &tempt)) {
 		puts("clock_gettime failed!");
 		grace_exit(-1);
 	}
 
-	//stage 1: deal with 2
 	pusharr(&dest, 2);
 	 
 	for (unsigned long p = 3; p < cfg->ubound; p += 2) {
-		//stage 1: use current prime
+		report->cnt++;
+		report->nread += min(dest->size, pbound);
 		for (int i = 0; i < min(dest->size, pbound); i++) {
 			if (!(p % dest->arr[i])) {
 				goto next;
@@ -154,7 +156,7 @@ next:
 end:
 
 	//report stuff
-	if (-1 == clock_gettime(CLOCK_REALTIME, report->time)) {
+	if (-1 == clock_gettime(CLOCK_MONOTONIC, report->time)) {
 		puts("clock_gettime failed!");
 		grace_exit(-1);
 	}

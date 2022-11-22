@@ -29,6 +29,8 @@ struct rep_t *init_rep(void)
 	out->time->tv_nsec = 0;
 	out->cnt = 0;
 	out->sqrt = 0;
+	out->algo = 1;
+	out->nread = 0;
 
 	return out;
 }
@@ -50,7 +52,8 @@ void print_report(struct rep_t *in)
 	}
 	printf("* Algorithm used: %d\n", in->algo);
 	printf("* Number of loop iterations: %ld\n", in->cnt);
-	printf("\n***\n");
+	printf("* Number of (one-element) reads from array: %ld\n", in->nread);
+	printf("***\n");
 }
 void grace_exit(int code)
 {

@@ -9,6 +9,7 @@ struct rep_t {
 	int cnt;
 	int sqrt;
 	int algo;
+	size_t nread;
 	struct timespec *time; //time spent generating
 };
 struct pcfg_t {
